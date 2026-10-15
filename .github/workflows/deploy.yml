@@ -10,7 +10,39 @@ permissions:
   id-token: write
 
 jobs:
+  # ---------- STAGE 1: TEST ----------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Check index.html exists
+        run: |
+          test -f site/index.html
+          echo "✅ index.html found"
+
+      - name: Check the page has a title
+        run: |
+          grep -q "<title>" site/index.html
+          echo "✅ Title tag found"
+
+      - name: Check the page shows a version
+        run: |
+          grep -q "Version" site/index.html
+          echo "✅ Version text found"
+
+      - name: Check no leftover TODO notes
+        run: |
+          if grep -qi "TODO" site/index.html; then
+            echo "❌ Found TODO in index.html - finish it before deploying"
+            exit 1
+          fi
+          echo "✅ No TODOs"
+
+  # ---------- STAGE 2: DEPLOY ----------
   deploy:
+    needs: test          # 👈 deploy waits for test, and is skipped if test fails
     runs-on: ubuntu-latest
     environment:
       name: github-pages
