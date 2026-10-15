@@ -2,7 +2,9 @@ name: Deploy website
 
 on:
   push:
-    branches: [main]
+    branches: [main]        # run when something lands in main
+  pull_request:
+    branches: [main]        # NEW: also run when a PR asks to go into main
 
 permissions:
   contents: read
@@ -10,7 +12,7 @@ permissions:
   id-token: write
 
 jobs:
-  # ---------- STAGE 1: TEST ----------
+  # ---------- STAGE 1: TEST (runs on PRs and on main) ----------
   test:
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +42,10 @@ jobs:
           fi
           echo "✅ No TODOs"
 
-  # ---------- STAGE 2: DEPLOY ----------
+  # ---------- STAGE 2: DEPLOY (only after merge to main) ----------
   deploy:
-    needs: test          # 👈 deploy waits for test, and is skipped if test fails
+    needs: test
+    if: github.event_name == 'push'     # NEW: never deploy from a PR, only from main
     runs-on: ubuntu-latest
     environment:
       name: github-pages
